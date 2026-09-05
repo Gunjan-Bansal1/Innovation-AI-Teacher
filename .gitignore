@@ -1,0 +1,59 @@
+# ==========================================
+# AI Teacher Git Ignore Configuration
+# ==========================================
+
+# Environment & Secrets (NEVER COMMIT REAL SECRETS)
+.env
+.env.*
+!.env.example
+
+# Python virtual environments
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Byte-code & Python caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Build artifacts & packages
+*.egg-info/
+dist/
+build/
+eggs/
+.eggs/
+
+# Runtime data & process logs
+.runtime/
+logs/
+*.log
+*.pid
+
+# Dynamic user uploads & generated media (folders kept via .gitkeep)
+backend/app/static/uploads/*
+!backend/app/static/uploads/.gitkeep
+backend/app/static/generated_videos/*
+!backend/app/static/generated_videos/.gitkeep
+uploads/*
+
+# OS-specific temporary files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE & editor configurations
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Explicit inclusions
+!requirements.txt
+!*.md

@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block title %}AI Teacher — What would you like to learn today?{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="relative overflow-hidden">
+  <!-- Background gradient -->
+  <div class="absolute inset-0 bg-gradient-to-br from-slate-50 via-indigo-50/30 to-violet-50/20"></div>
+  <div class="absolute top-0 right-0 w-96 h-96 bg-indigo-100 rounded-full blur-3xl opacity-30 -translate-y-1/2 translate-x-1/2"></div>
+  <div class="absolute bottom-0 left-0 w-80 h-80 bg-violet-100 rounded-full blur-3xl opacity-20 translate-y-1/2 -translate-x-1/2"></div>
+
+  <div class="relative max-w-5xl mx-auto px-6 pt-20 pb-16 text-center">
+    <!-- Badge -->
+    <div class="inline-flex items-center gap-2 bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-6">
+      <span class="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-pulse"></span>
+      Powered by gemma4:31b-cloud via Ollama
+    </div>
+
+    <h1 class="text-5xl sm:text-6xl font-extrabold text-slate-900 leading-tight mb-4 tracking-tight">
+      What would you like to<br>
+      <span class="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">learn today?</span>
+    </h1>
+    <p class="text-xl text-slate-500 max-w-2xl mx-auto mb-12 leading-relaxed">
+      Your personal AI teacher — adaptive, patient, and powered by advanced AI.
+      Learn any subject at your own pace, in your language.
+    </p>
+
+    <!-- Main action cards -->
+    <div class="grid sm:grid-cols-3 gap-6 max-w-5xl mx-auto">
+      <!-- Upload Material -->
+      <div id="card-upload" class="group relative bg-white rounded-2xl border border-slate-200 shadow-md hover:shadow-xl hover:border-indigo-300 transition-all duration-300 cursor-pointer overflow-hidden"
+           onclick="window.location.href='/setup?mode=document'">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-full blur-2xl opacity-60 translate-x-8 -translate-y-8"></div>
+        <div class="relative p-8 text-left">
+          <div class="w-14 h-14 bg-indigo-100 group-hover:bg-indigo-600 rounded-2xl flex items-center justify-center mb-5 transition-colors duration-300">
+            <svg class="w-7 h-7 text-indigo-600 group-hover:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+            </svg>
+          </div>
+          <h2 class="text-xl font-bold text-slate-800 mb-2">Upload Learning Material</h2>
+          <p class="text-slate-500 text-sm leading-relaxed">Upload a PDF, DOCX, PPTX, or TXT file. AI will analyze it and create a personalized lesson.</p>
+          <div class="mt-5 flex items-center gap-2 text-indigo-600 text-sm font-semibold">
+            <span>Get started</span>
+            <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </div>
+        </div>
+        <div class="px-8 py-3 bg-slate-50 border-t border-slate-100 text-xs text-slate-400 flex gap-3">
+          <span>📄 PDF</span><span>📝 DOCX</span><span>📊 PPTX</span><span>📃 TXT</span>
+        </div>
+      </div>
+
+      <!-- Learn a Topic -->
+      <div id="card-topic" class="group relative bg-white rounded-2xl border border-slate-200 shadow-md hover:shadow-xl hover:border-violet-300 transition-all duration-300 cursor-pointer overflow-hidden"
+           onclick="window.location.href='/setup?mode=topic'">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-violet-50 rounded-full blur-2xl opacity-60 translate-x-8 -translate-y-8"></div>
+        <div class="relative p-8 text-left">
+          <div class="w-14 h-14 bg-violet-100 group-hover:bg-violet-600 rounded-2xl flex items-center justify-center mb-5 transition-colors duration-300">
+            <svg class="w-7 h-7 text-violet-600 group-hover:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+            </svg>
+          </div>
+          <h2 class="text-xl font-bold text-slate-800 mb-2">Learn a Topic</h2>
+          <p class="text-slate-500 text-sm leading-relaxed">Type any topic — Ohm's Law, Photosynthesis, World War II, Python — and start learning immediately.</p>
+          <div class="mt-5 flex items-center gap-2 text-violet-600 text-sm font-semibold">
+            <span>Explore topics</span>
+            <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </div>
+        </div>
+        <div class="px-8 py-3 bg-slate-50 border-t border-slate-100 text-xs text-slate-400 flex gap-3">
+          <span>⚡ Physics</span><span>🧮 Math</span><span>💻 Code</span><span>📚 Any subject</span>
+        </div>
+      </div>
+
+      <!-- Create Video -->
+      <div id="card-video" class="group relative bg-white rounded-2xl border border-slate-200 shadow-md hover:shadow-xl hover:border-emerald-300 transition-all duration-300 cursor-pointer overflow-hidden"
+           onclick="window.location.href='/video'">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-emerald-50 rounded-full blur-2xl opacity-60 translate-x-8 -translate-y-8"></div>
+        <div class="relative p-8 text-left">
+          <div class="w-14 h-14 bg-emerald-100 group-hover:bg-emerald-600 rounded-2xl flex items-center justify-center mb-5 transition-colors duration-300">
+            <svg class="w-7 h-7 text-emerald-600 group-hover:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+            </svg>
+          </div>
+          <h2 class="text-xl font-bold text-slate-800 mb-2">Create Topic Video</h2>
+          <p class="text-slate-500 text-sm leading-relaxed">Enter any topic and generate a downloadable AI Teacher lesson video.</p>
+          <div class="mt-5 flex items-center gap-2 text-emerald-600 text-sm font-semibold">
+            <span>Create video</span>
+            <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </div>
+        </div>
+        <div class="px-8 py-3 bg-slate-50 border-t border-slate-100 text-xs text-slate-400 flex gap-3">
+          <span>MP4</span><span>Captions</span><span>Avatar</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- How it works -->
+<section class="max-w-5xl mx-auto px-6 py-16">
+  <div class="text-center mb-12">
+    <h2 class="text-3xl font-bold text-slate-800 mb-3">How AI Teacher Works</h2>
+    <p class="text-slate-500 text-lg">Adaptive teaching cycle — not just a chatbot</p>
+  </div>
+  <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+    {% set steps = [
+      ("🧠", "Understand", "AI analyzes your material and learning goals"),
+      ("📋", "Plan", "Creates a personalized lesson plan for your time"),
+      ("🎓", "Teach", "Explains concepts with visuals and smart board"),
+      ("🔄", "Adapt", "Detects misconceptions and changes teaching strategy"),
+    ] %}
+    {% for icon, title, desc in steps %}
+    <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-6 text-center hover:shadow-md transition-shadow">
+      <div class="text-3xl mb-3">{{ icon }}</div>
+      <h3 class="font-bold text-slate-800 mb-1">{{ title }}</h3>
+      <p class="text-slate-500 text-sm leading-relaxed">{{ desc }}</p>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<!-- Features -->
+<section class="bg-white border-y border-slate-100 py-16">
+  <div class="max-w-5xl mx-auto px-6">
+    <div class="grid sm:grid-cols-3 gap-8">
+      <div class="text-center">
+        <div class="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center mx-auto mb-4">
+          <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/>
+          </svg>
+        </div>
+        <h3 class="font-bold text-slate-800 mb-2">Multilingual</h3>
+        <p class="text-slate-500 text-sm">English, Hindi, or Hinglish — switch languages anytime without losing progress</p>
+      </div>
+      <div class="text-center">
+        <div class="w-12 h-12 bg-violet-50 rounded-xl flex items-center justify-center mx-auto mb-4">
+          <svg class="w-6 h-6 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+          </svg>
+        </div>
+        <h3 class="font-bold text-slate-800 mb-2">Mastery Tracking</h3>
+        <p class="text-slate-500 text-sm">Real-time concept mastery bars. Every question updates your understanding score</p>
+      </div>
+      <div class="text-center">
+        <div class="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center mx-auto mb-4">
+          <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+          </svg>
+        </div>
+        <h3 class="font-bold text-slate-800 mb-2">Adaptive Teaching</h3>
+        <p class="text-slate-500 text-sm">Wrong answer? AI identifies WHY and explains differently — water-pipe analogies, diagrams, examples</p>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

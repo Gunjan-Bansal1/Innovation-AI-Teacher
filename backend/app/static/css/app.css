@@ -1,0 +1,73 @@
+/* app.css — Custom styles for AI Teacher */
+
+/* Smooth transitions globally */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #f1f5f9; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* Classroom layout */
+#classroom-root {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Prose styles for board content */
+.prose { max-width: none; }
+.prose pre { margin: 0; }
+
+/* Mermaid diagram centering */
+.mermaid-wrapper svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* MCQ hover effect */
+.mcq-option {
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+/* Mastery bar transitions */
+.mastery-bar {
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Teacher avatar pulse animation for speaking state */
+.speaking-pulse {
+  animation: speakingPulse 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes speakingPulse {
+  from { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
+  to { box-shadow: 0 0 0 12px rgba(99, 102, 241, 0); }
+}
+
+/* Smart board content styling */
+.board-content {
+  font-family: 'Inter', sans-serif;
+}
+
+.board-content .katex-display {
+  margin: 1rem 0;
+}
+
+/* Animation for adaptation banner */
+#adaptation-banner {
+  transition: opacity 0.3s ease;
+}
+
+/* Premium card hover effect */
+.premium-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.premium-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+}

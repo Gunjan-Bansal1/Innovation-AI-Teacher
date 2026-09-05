@@ -1,0 +1,351 @@
+{% extends "base.html" %}
+{% block title %}Create Topic Video - AI Teacher{% endblock %}
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-6 py-12">
+  <div class="mb-8">
+    <div class="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-4">
+      <span>AI Teaching Video</span>
+    </div>
+    <h1 class="text-3xl font-bold text-slate-800 mb-2">Create a Teaching Video From Any Topic</h1>
+    <p class="text-slate-500">Enter a topic, let Gemma write the lesson, then generate a Simli talking-teacher video.</p>
+  </div>
+
+  <div class="grid lg:grid-cols-[360px_1fr] gap-6">
+    <form id="video-form" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-5">
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-2">Topic or Question</label>
+        <input id="topic-input" type="text" required placeholder="e.g., Photosynthesis, Ohm's Law, Python loops"
+               class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 outline-none text-sm" />
+      </div>
+
+      <!-- Document badge -->
+      <div id="doc-badge" class="hidden p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs flex items-center gap-2.5">
+        <span class="text-base">📄</span>
+        <div>
+          <p class="font-semibold text-emerald-900" id="doc-badge-name">Attached Document</p>
+          <p class="text-emerald-700 text-[11px]">Gemma 4 will ground its teaching in this document.</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-2">Level</label>
+          <select id="level-select" class="w-full px-3 py-2.5 rounded-lg border border-slate-200 outline-none text-sm">
+          <option value="beginner">Beginner</option>
+            <option value="intermediate">Intermediate</option>
+            <option value="advanced">Advanced</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-2">Language</label>
+          <select id="language-select" class="w-full px-3 py-2.5 rounded-lg border border-slate-200 outline-none text-sm">
+            <option value="english">English</option>
+            <option value="hindi">Hindi</option>
+            <option value="hinglish">Hinglish</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-2">Style</label>
+        <select id="style-select" class="w-full px-3 py-2.5 rounded-lg border border-slate-200 outline-none text-sm">
+          <option value="simple">Simple</option>
+          <option value="visual" selected>Visual</option>
+          <option value="practical">Practical</option>
+          <option value="technical">Technical</option>
+          <option value="analogy_based">Analogy Based</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-2">Video Length</label>
+        <select id="duration-select" class="w-full px-3 py-2.5 rounded-lg border border-slate-200 outline-none text-sm">
+          <option value="45">45 seconds</option>
+          <option value="60" selected>60 seconds</option>
+          <option value="90">90 seconds</option>
+          <option value="120">2 minutes</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="flex items-start gap-3 p-3 rounded-xl border border-slate-200 cursor-pointer">
+          <input id="local-fallback" type="checkbox" class="mt-1">
+          <span>
+            <span class="block text-sm font-semibold text-slate-700">Use local demo generator</span>
+            <span class="block text-xs text-slate-400 mt-0.5">Only use this if Simli or ElevenLabs keys are not configured.</span>
+          </span>
+        </label>
+      </div>
+
+      <button id="generate-btn" type="submit"
+              class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl text-sm shadow-md transition-all flex items-center justify-center gap-2">
+        <span id="generate-text">Generate Simli Video</span>
+        <svg id="generate-spinner" class="w-4 h-4 animate-spin hidden" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+      </button>
+      <p id="video-error" class="hidden text-sm text-red-500"></p>
+    </form>
+
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+      <div id="empty-state" class="h-full min-h-[320px] flex flex-col items-center justify-center text-center text-slate-400">
+        <svg class="w-14 h-14 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+        </svg>
+        <p class="text-sm">Your generated AI Teacher video will appear here.</p>
+      </div>
+
+      <div id="video-result" class="hidden">
+        <div id="visual-box" class="hidden mb-4">
+          <div class="flex items-center justify-between mb-2">
+            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Animated Visual Board</p>
+            <span class="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-full">In-video</span>
+          </div>
+          <div id="visual-grid" class="grid sm:grid-cols-2 gap-3"></div>
+        </div>
+        <video id="result-video" class="w-full rounded-xl bg-slate-900 mb-4" controls playsinline></video>
+        <div id="script-box" class="hidden mb-4 p-4 bg-slate-50 border border-slate-200 rounded-xl">
+          <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Gemma Script</p>
+          <p id="script-text" class="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap"></p>
+        </div>
+        <div class="flex items-center justify-between gap-3">
+          <div>
+            <p class="text-sm font-bold text-slate-700">Video ready</p>
+            <p id="video-meta" class="text-xs text-slate-400"></p>
+          </div>
+          <a id="download-link" href="#" target="_blank"
+             class="bg-slate-800 hover:bg-slate-900 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-all">Open Video</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const videoParams = new URLSearchParams(window.location.search);
+const initialTopic = videoParams.get('topic') || localStorage.getItem('custom_question') || localStorage.getItem('topic') || '';
+const initialDocId = videoParams.get('document_id') || localStorage.getItem('document_id') || '';
+const autoGenerate = videoParams.get('auto_generate') === 'true';
+
+document.getElementById('topic-input').value = initialTopic;
+if (videoParams.get('level')) document.getElementById('level-select').value = videoParams.get('level');
+if (videoParams.get('language')) document.getElementById('language-select').value = videoParams.get('language');
+if (videoParams.get('style')) document.getElementById('style-select').value = videoParams.get('style');
+
+if (initialDocId) {
+  const docBadge = document.getElementById('doc-badge');
+  if (docBadge) {
+    docBadge.classList.remove('hidden');
+    const docInfo = JSON.parse(localStorage.getItem('document_info') || '{}');
+    if (docInfo.filename) {
+      document.getElementById('doc-badge-name').textContent = `📄 Grounded in: ${docInfo.filename}`;
+    }
+  }
+}
+
+document.getElementById('video-form').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const btn = document.getElementById('generate-btn');
+  const spinner = document.getElementById('generate-spinner');
+  const text = document.getElementById('generate-text');
+  const error = document.getElementById('video-error');
+
+  btn.disabled = true;
+  spinner.classList.remove('hidden');
+  const useLocalFallback = document.getElementById('local-fallback').checked;
+  text.textContent = initialDocId
+    ? (useLocalFallback ? 'Analyzing doc & generating MP4...' : 'Gemma 4 analyzing doc + Simli generating...')
+    : (useLocalFallback ? 'Generating MP4...' : 'Gemma + Simli generating...');
+  error.classList.add('hidden');
+
+  try {
+    const body = {
+      topic: document.getElementById('topic-input').value.trim(),
+      level: document.getElementById('level-select').value,
+      language: document.getElementById('language-select').value,
+      teaching_style: document.getElementById('style-select').value,
+      duration_seconds: Number(document.getElementById('duration-select').value),
+      document_id: initialDocId || null,
+      custom_question: initialTopic || null
+    };
+    if (!body.topic) throw new Error('Please enter a topic or question');
+
+    localStorage.setItem('topic', body.topic);
+    const endpoint = useLocalFallback ? '/api/avatar/topic-video' : '/api/avatar/simli-topic-video';
+    const resp = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (!resp.ok) {
+      const data = await resp.json().catch(() => ({}));
+      throw new Error(data.detail || 'Video generation failed');
+    }
+
+    const data = await resp.json();
+    const url = data.video_url || data.hls_url || data.mp4_url;
+    if (!url) throw new Error('Video generated but no playable URL was returned');
+    document.getElementById('empty-state').classList.add('hidden');
+    document.getElementById('video-result').classList.remove('hidden');
+    attachVideo(url);
+    document.getElementById('download-link').href = data.video_url || data.mp4_url || url;
+    document.getElementById('video-meta').textContent = `${data.duration_seconds || body.duration_seconds}s - ${data.provider}${data.document_id ? ' (Document Grounded)' : ''}`;
+    if (data.script) {
+      document.getElementById('script-text').textContent = data.script;
+      document.getElementById('script-box').classList.remove('hidden');
+    }
+    document.getElementById('visual-box').classList.add('hidden');
+  } catch (err) {
+    error.textContent = err.message;
+    error.classList.remove('hidden');
+  } finally {
+    btn.disabled = false;
+    spinner.classList.add('hidden');
+    text.textContent = useLocalFallback ? 'Generate Video' : 'Generate Simli Video';
+  }
+});
+
+// Automatically start generation if arriving from setup with auto_generate flag
+if (autoGenerate && initialTopic) {
+  setTimeout(() => {
+    document.getElementById('video-form').dispatchEvent(new Event('submit'));
+  }, 400);
+}
+
+function attachVideo(url) {
+  const video = document.getElementById('result-video');
+  video.removeAttribute('src');
+  video.load();
+  if (window.Hls && Hls.isSupported() && url.includes('.m3u8')) {
+    const hls = new Hls();
+    hls.loadSource(url);
+    hls.attachMedia(video);
+  } else {
+    video.src = url;
+  }
+}
+
+function escapeHtml(value) {
+  return String(value || '').replace(/[&<>"']/g, (char) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  }[char]));
+}
+
+function visualSvg(type, labels) {
+  const safeLabels = labels.map((label) => escapeHtml(String(label || '').slice(0, 18)));
+  if (type === 'chart') {
+    return `
+      <svg viewBox="0 0 280 130" class="w-full h-32">
+        <rect x="12" y="12" width="256" height="106" rx="8" fill="#ecfdf5"/>
+        <line x1="42" y1="98" x2="242" y2="98" stroke="#64748b" stroke-width="2"/>
+        <rect x="56" y="56" width="34" height="42" rx="4" fill="#10b981"/>
+        <rect x="122" y="36" width="34" height="62" rx="4" fill="#3b82f6"/>
+        <rect x="188" y="68" width="34" height="30" rx="4" fill="#f59e0b"/>
+        <rect x="42" y="22" width="34" height="5" rx="2" fill="#059669">
+          <animate attributeName="x" values="42;204;42" dur="2.8s" repeatCount="indefinite"/>
+        </rect>
+        <text x="73" y="113" text-anchor="middle" font-size="9" fill="#334155">${safeLabels[0] || 'A'}</text>
+        <text x="139" y="113" text-anchor="middle" font-size="9" fill="#334155">${safeLabels[1] || 'B'}</text>
+        <text x="205" y="113" text-anchor="middle" font-size="9" fill="#334155">${safeLabels[2] || 'C'}</text>
+      </svg>`;
+  }
+  if (type === 'diagram') {
+    return `
+      <svg viewBox="0 0 280 130" class="w-full h-32">
+        <rect x="12" y="12" width="256" height="106" rx="8" fill="#f8fafc"/>
+        <circle cx="140" cy="62" r="28" fill="#dbeafe" stroke="#2563eb" stroke-width="3"/>
+        <rect x="28" y="46" width="70" height="32" rx="8" fill="#ccfbf1"/>
+        <rect x="182" y="46" width="70" height="32" rx="8" fill="#fef3c7"/>
+        <line x1="98" y1="62" x2="112" y2="62" stroke="#64748b" stroke-width="2"/>
+        <line x1="168" y1="62" x2="182" y2="62" stroke="#64748b" stroke-width="2"/>
+        <circle cx="140" cy="62" r="34" fill="none" stroke="#2563eb" stroke-width="2" opacity="0.35">
+          <animate attributeName="r" values="30;38;30" dur="2s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="0.2;0.55;0.2" dur="2s" repeatCount="indefinite"/>
+        </circle>
+        <text x="63" y="66" text-anchor="middle" font-size="10" fill="#0f172a">${safeLabels[0] || 'Input'}</text>
+        <text x="140" y="66" text-anchor="middle" font-size="10" fill="#0f172a">${safeLabels[1] || 'Idea'}</text>
+        <text x="217" y="66" text-anchor="middle" font-size="10" fill="#0f172a">${safeLabels[2] || 'Result'}</text>
+      </svg>`;
+  }
+  return `
+    <svg viewBox="0 0 280 130" class="w-full h-32">
+      <rect x="12" y="12" width="256" height="106" rx="8" fill="#f0fdf4"/>
+      <rect x="24" y="50" width="56" height="32" rx="8" fill="#10b981"/>
+      <rect x="112" y="50" width="56" height="32" rx="8" fill="#3b82f6"/>
+      <rect x="200" y="50" width="56" height="32" rx="8" fill="#8b5cf6"/>
+      <path d="M84 66h22M172 66h22" stroke="#64748b" stroke-width="3" stroke-linecap="round"/>
+      <path d="M102 58l8 8-8 8M190 58l8 8-8 8" fill="none" stroke="#64748b" stroke-width="2"/>
+      <circle cx="52" cy="92" r="4" fill="#10b981">
+        <animate attributeName="cx" values="52;140;228;52" dur="3s" repeatCount="indefinite"/>
+      </circle>
+      <text x="52" y="70" text-anchor="middle" font-size="9" fill="white">${safeLabels[0] || 'Start'}</text>
+      <text x="140" y="70" text-anchor="middle" font-size="9" fill="white">${safeLabels[1] || 'Learn'}</text>
+      <text x="228" y="70" text-anchor="middle" font-size="9" fill="white">${safeLabels[2] || 'Apply'}</text>
+    </svg>`;
+}
+
+function buildClientVisualStoryboard(topic) {
+  const cleanTopic = topic || 'Topic';
+  return [
+    {
+      type: 'flow',
+      title: `${cleanTopic}: flow chart`,
+      description: 'The lesson starts from the main idea, moves through key parts, then checks understanding.',
+      labels: [cleanTopic, 'Key parts', 'Check']
+    },
+    {
+      type: 'diagram',
+      title: 'Concept diagram',
+      description: `A labeled diagram shows how the important parts of ${cleanTopic} connect.`,
+      labels: ['Input', 'Process', 'Result']
+    },
+    {
+      type: 'chart',
+      title: 'Comparison chart',
+      description: 'Short visual bars compare the definition, example, and common mistake.',
+      labels: ['Definition', 'Example', 'Mistake']
+    },
+    {
+      type: 'recap',
+      title: 'Revision map',
+      description: 'The final board shows what to remember, practice, and learn next.',
+      labels: ['Remember', 'Practice', 'Next']
+    }
+  ];
+}
+
+function renderVisualStoryboard(items) {
+  const box = document.getElementById('visual-box');
+  const grid = document.getElementById('visual-grid');
+  grid.innerHTML = '';
+  if (!items.length) {
+    box.classList.add('hidden');
+    return;
+  }
+  items.forEach((item) => {
+    const labels = Array.isArray(item.labels) ? item.labels : [];
+    const div = document.createElement('div');
+    div.className = 'rounded-xl border border-slate-200 bg-white overflow-hidden';
+    div.innerHTML = `
+      ${visualSvg(item.type, labels)}
+      <div class="p-3 border-t border-slate-100">
+        <p class="text-sm font-bold text-slate-700">${escapeHtml(item.title)}</p>
+        <p class="text-xs text-slate-500 mt-1 leading-relaxed">${escapeHtml(item.description)}</p>
+      </div>`;
+    grid.appendChild(div);
+  });
+  box.classList.remove('hidden');
+}
+</script>
+{% endblock %}

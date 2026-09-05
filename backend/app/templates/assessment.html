@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% block title %}Final Assessment — AI Teacher{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-6 py-12">
+  <div class="text-center mb-8">
+    <h1 class="text-3xl font-bold text-slate-800 mb-2">🎓 Final Assessment</h1>
+    <p class="text-slate-500" id="assessment-subtitle">Testing what you learned today</p>
+  </div>
+
+  <!-- Loading -->
+  <div id="loading-state" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-10 text-center">
+    <div class="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto mb-4"></div>
+    <p class="text-slate-500">Generating your assessment...</p>
+  </div>
+
+  <!-- Assessment questions -->
+  <div id="assessment-form" class="hidden">
+    <div id="questions-container" class="space-y-6 mb-8"></div>
+    <button id="submit-assessment-btn" onclick="submitAssessment()"
+            class="w-full bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold py-4 rounded-xl text-base shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2">
+      <span id="submit-btn-text">Submit Assessment →</span>
+      <svg id="submit-spinner" class="w-4 h-4 animate-spin hidden" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+      </svg>
+    </button>
+    <p id="submit-error" class="text-red-500 text-sm mt-3 text-center hidden"></p>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const sessionId = localStorage.getItem('session_id');
+const lessonId = localStorage.getItem('lesson_id');
+let assessmentId = null;
+let questions = [];
+const answers = {};
+
+async function loadAssessment() {
+  try {
+    const resp = await fetch('/api/assessments/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: sessionId, lesson_id: lessonId, question_count: 5 })
+    });
+    if (!resp.ok) throw new Error('Failed to generate assessment');
+    const data = await resp.json();
+    assessmentId = data.assessment_id;
+    questions = data.questions;
+    localStorage.setItem('assessment_id', assessmentId);
+
+    document.getElementById('assessment-subtitle').textContent =
+      `${data.total_questions} questions about what you just learned`;
+
+    renderQuestions(questions);
+    document.getElementById('loading-state').classList.add('hidden');
+    document.getElementById('assessment-form').classList.remove('hidden');
+  } catch (err) {
+    document.getElementById('loading-state').innerHTML =
+      `<p class="text-red-500">Error: ${err.message}</p>`;
+  }
+}
+
+function renderQuestions(qs) {
+  const container = document.getElementById('questions-container');
+  container.innerHTML = '';
+
+  qs.forEach((q, i) => {
+    const typeLabels = {
+      mcq: 'Multiple Choice', short_answer: 'Short Answer',
+      conceptual: 'Conceptual', application: 'Application',
+      problem_solving: 'Problem Solving', explain_own_words: 'In Your Own Words'
+    };
+    const typeColors = {
+      mcq: 'bg-blue-50 text-blue-700 border-blue-200',
+      short_answer: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      conceptual: 'bg-violet-50 text-violet-700 border-violet-200',
+      application: 'bg-amber-50 text-amber-700 border-amber-200',
+      problem_solving: 'bg-rose-50 text-rose-700 border-rose-200',
+      explain_own_words: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+    };
+
+    const div = document.createElement('div');
+    div.className = 'bg-white rounded-2xl border border-slate-200 shadow-sm p-6';
+    div.innerHTML = `
+      <div class="flex items-start justify-between mb-3">
+        <div class="flex items-center gap-2">
+          <span class="w-7 h-7 bg-indigo-600 text-white text-xs font-bold rounded-lg flex items-center justify-center">${i+1}</span>
+          <span class="px-2 py-0.5 rounded-full text-xs font-semibold border ${typeColors[q.question_type] || 'bg-slate-50 text-slate-600 border-slate-200'}">${typeLabels[q.question_type] || q.question_type}</span>
+        </div>
+        <span class="text-xs text-slate-400 font-medium">${q.concept_key?.replace(/_/g,' ')}</span>
+      </div>
+      <p class="text-slate-800 font-medium mb-4 leading-relaxed">${q.question_text}</p>
+      ${q.options ? renderMCQ(q, i) : renderTextarea(q, i)}
+    `;
+    container.appendChild(div);
+  });
+}
+
+function renderMCQ(q, i) {
+  return `<div class="space-y-2" id="mcq-${i}">
+    ${q.options.map((opt, j) => `
+      <label class="flex items-start gap-3 p-3 rounded-xl border border-slate-200 hover:border-indigo-300 cursor-pointer transition-all mcq-option">
+        <input type="radio" name="q${i}" value="${opt}" class="mt-0.5 text-indigo-600" onchange="answers['${q.question_id}'] = this.value" />
+        <span class="text-sm text-slate-700">${opt}</span>
+      </label>`).join('')}
+  </div>`;
+}
+
+function renderTextarea(q, i) {
+  return `<textarea rows="3" placeholder="Type your answer here..."
+    class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-indigo-400 outline-none text-sm resize-none transition-all"
+    onchange="answers['${q.question_id}'] = this.value"
+    oninput="answers['${q.question_id}'] = this.value"></textarea>`;
+}
+
+async function submitAssessment() {
+  const btn = document.getElementById('submit-assessment-btn');
+  const spinner = document.getElementById('submit-spinner');
+  const error = document.getElementById('submit-error');
+
+  // Check all answered
+  let allAnswered = true;
+  questions.forEach(q => {
+    if (!answers[q.question_id]) allAnswered = false;
+  });
+
+  if (!allAnswered) {
+    error.textContent = 'Please answer all questions before submitting.';
+    error.classList.remove('hidden');
+    return;
+  }
+
+  btn.disabled = true;
+  spinner.classList.remove('hidden');
+  document.getElementById('submit-btn-text').textContent = 'Evaluating answers...';
+  error.classList.add('hidden');
+
+  try {
+    const answersList = questions.map(q => ({
+      question_id: q.question_id,
+      student_answer: answers[q.question_id] || ''
+    }));
+
+    const resp = await fetch(`/api/assessments/${assessmentId}/submit`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ answers: answersList })
+    });
+
+    if (!resp.ok) throw new Error('Submission failed');
+    const result = await resp.json();
+    localStorage.setItem('assessment_result', JSON.stringify(result));
+
+    window.location.href = '/report';
+  } catch (err) {
+    error.textContent = err.message;
+    error.classList.remove('hidden');
+    btn.disabled = false;
+    spinner.classList.add('hidden');
+    document.getElementById('submit-btn-text').textContent = 'Submit Assessment →';
+  }
+}
+
+loadAssessment();
+</script>
+{% endblock %}

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}AI Teacher — Human-Like Adaptive AI Educator{% endblock %}</title>
+  <meta name="description" content="{% block description %}AI Teacher: An adaptive AI tutoring system that personalizes learning, detects misconceptions, and teaches like a real human tutor.{% endblock %}" />
+  <!-- TailwindCSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Mermaid.js for diagrams -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <!-- KaTeX for formulas -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/static/css/app.css" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          colors: {
+            navy: { 50:'#eef2f7', 100:'#d6e2ef', 200:'#adc5df', 300:'#84a8cf', 400:'#5b8bbf', 500:'#1E3A5F', 600:'#1a3254', 700:'#162b47', 800:'#12233b', 900:'#0e1c2e' },
+          }
+        }
+      }
+    }
+  </script>
+  {% block head %}{% endblock %}
+</head>
+<body class="bg-slate-50 font-sans text-slate-900 min-h-screen">
+
+  <!-- Navigation -->
+  <nav class="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <a href="/" class="flex items-center gap-3 group">
+          <div class="w-9 h-9 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-xl flex items-center justify-center shadow-md group-hover:shadow-indigo-200 transition-shadow">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+            </svg>
+          </div>
+          <span class="font-bold text-lg text-slate-800 tracking-tight">AI Teacher</span>
+        </a>
+        <div class="flex items-center gap-6">
+          <a href="/" class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors">Home</a>
+          <a href="/video" class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors">Video</a>
+          <a href="/dashboard" class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors">Dashboard</a>
+          <a href="/setup" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors shadow-sm">Start Learning</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main content -->
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-slate-100 mt-20 py-8">
+    <div class="max-w-7xl mx-auto px-4 text-center text-slate-400 text-sm">
+      <p>AI Teacher — Powered by <span class="text-indigo-500 font-medium">gemma4:31b-cloud</span> via Ollama</p>
+    </div>
+  </footer>
+
+  <!-- Global JS -->
+  <script src="/static/js/app.js"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

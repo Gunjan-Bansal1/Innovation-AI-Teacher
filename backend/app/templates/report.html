@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+{% block title %}Learning Report — AI Teacher{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-6 py-12">
+  <div class="text-center mb-8">
+    <h1 class="text-3xl font-bold text-slate-800 mb-2">📊 Your Learning Report</h1>
+    <p class="text-slate-500" id="report-subtitle">Generating your personalized report...</p>
+  </div>
+
+  <!-- Loading -->
+  <div id="loading-state" class="bg-white rounded-2xl border border-slate-200 p-10 text-center">
+    <div class="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto mb-4"></div>
+    <p class="text-slate-500">AI is analyzing your performance...</p>
+  </div>
+
+  <!-- Report content -->
+  <div id="report-content" class="hidden space-y-5">
+
+    <!-- Score overview -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+      <div class="grid sm:grid-cols-4 gap-5">
+        <div class="text-center">
+          <div id="score-circle" class="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-extrabold mx-auto border-4 border-indigo-200 text-indigo-600">—</div>
+          <p class="text-xs text-slate-400 mt-2">Overall Score</p>
+        </div>
+        <div class="text-center">
+          <div class="text-2xl font-bold text-slate-800" id="grade-display">—</div>
+          <p class="text-xs text-slate-400 mt-1">Grade</p>
+        </div>
+        <div class="text-center">
+          <div class="text-2xl font-bold text-slate-800" id="accuracy-display">—</div>
+          <p class="text-xs text-slate-400 mt-1">Accuracy</p>
+        </div>
+        <div class="text-center">
+          <div class="text-2xl font-bold text-slate-800" id="time-display">—</div>
+          <p class="text-xs text-slate-400 mt-1">Learning Time</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Overall summary -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+      <h2 class="font-bold text-slate-800 mb-3">Overall Summary</h2>
+      <p id="summary-text" class="text-slate-600 leading-relaxed text-sm"></p>
+      <p id="encouragement-text" class="text-indigo-600 font-medium text-sm mt-3 italic"></p>
+    </div>
+
+    <!-- Concept mastery -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+      <h2 class="font-bold text-slate-800 mb-4">Concept Mastery</h2>
+      <div id="mastery-bars" class="space-y-3"></div>
+    </div>
+
+    <!-- Strengths + Weaknesses -->
+    <div class="grid sm:grid-cols-2 gap-5">
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+        <h3 class="font-bold text-emerald-700 mb-3 flex items-center gap-2">✅ Strong Concepts</h3>
+        <ul id="strong-list" class="space-y-2"></ul>
+      </div>
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+        <h3 class="font-bold text-amber-700 mb-3 flex items-center gap-2">⚠️ Needs Practice</h3>
+        <ul id="weak-list" class="space-y-2"></ul>
+      </div>
+    </div>
+
+    <!-- Misconceptions -->
+    <div id="misconceptions-section" class="hidden bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+      <h3 class="font-bold text-slate-800 mb-3">Misconceptions Detected</h3>
+      <ul id="misconceptions-list" class="space-y-2"></ul>
+    </div>
+
+    <!-- Recommendations -->
+    <div class="bg-gradient-to-r from-indigo-50 to-violet-50 rounded-2xl border border-indigo-200 p-6">
+      <h3 class="font-bold text-indigo-800 mb-3">📚 Recommended Next Steps</h3>
+      <div class="grid sm:grid-cols-2 gap-4">
+        <div>
+          <p class="text-xs font-semibold text-indigo-500 uppercase tracking-wide mb-2">Revise</p>
+          <ul id="revision-list" class="space-y-1"></ul>
+        </div>
+        <div>
+          <p class="text-xs font-semibold text-violet-500 uppercase tracking-wide mb-2">Practice</p>
+          <ul id="practice-list" class="space-y-1"></ul>
+        </div>
+      </div>
+      <div class="mt-4 pt-4 border-t border-indigo-200">
+        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Next Topic</p>
+        <p id="next-topic" class="text-indigo-700 font-semibold"></p>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex gap-4">
+      <a href="/" class="flex-1 bg-indigo-600 text-white font-bold py-3.5 rounded-xl text-sm text-center hover:bg-indigo-700 transition-all shadow-md">Start New Lesson</a>
+      <a href="/dashboard" class="flex-1 border border-slate-200 text-slate-700 font-bold py-3.5 rounded-xl text-sm text-center hover:border-slate-300 transition-all">View Dashboard</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const sessionId = localStorage.getItem('session_id');
+
+async function loadReport() {
+  try {
+    const resp = await fetch(`/api/reports/${sessionId}`);
+    if (!resp.ok) throw new Error('Failed to load report');
+    const data = await resp.json();
+    renderReport(data);
+  } catch (err) {
+    document.getElementById('loading-state').innerHTML =
+      `<p class="text-red-500">Error loading report: ${err.message}</p>`;
+  }
+}
+
+function renderReport(data) {
+  document.getElementById('loading-state').classList.add('hidden');
+  document.getElementById('report-content').classList.remove('hidden');
+  document.getElementById('report-subtitle').textContent = `Topic: ${data.topic} · ${data.elapsed_minutes} min`;
+
+  // Score — final_score/grade come only from the final assessment; show
+  // "Not yet assessed" rather than a misleading 0% if it hasn't happened.
+  const scoreEl = document.getElementById('score-circle');
+  if (data.final_score === null || data.final_score === undefined) {
+    scoreEl.textContent = '—';
+    scoreEl.className = 'w-20 h-20 rounded-full flex items-center justify-center text-sm font-semibold mx-auto border-4 border-slate-200 text-slate-400';
+  } else {
+    const score = Math.round(data.final_score * 100);
+    scoreEl.textContent = score + '%';
+    const colors = score >= 80 ? 'border-emerald-300 text-emerald-600' :
+                   score >= 60 ? 'border-amber-300 text-amber-600' : 'border-rose-300 text-rose-600';
+    scoreEl.className = `w-20 h-20 rounded-full flex items-center justify-center text-2xl font-extrabold mx-auto border-4 ${colors}`;
+  }
+
+  document.getElementById('grade-display').textContent = data.grade || (data.assessment_taken ? '—' : 'Not assessed');
+  document.getElementById('accuracy-display').textContent =
+    (data.accuracy_pct === null || data.accuracy_pct === undefined) ? '—' : data.accuracy_pct + '%';
+  document.getElementById('time-display').textContent = data.elapsed_minutes + ' min';
+
+  // Summary
+  document.getElementById('summary-text').textContent = data.overall_summary || '';
+  document.getElementById('encouragement-text').textContent = data.encouragement || '';
+
+  // Mastery bars
+  const masteryEl = document.getElementById('mastery-bars');
+  masteryEl.innerHTML = '';
+  Object.entries(data.concept_mastery || {}).forEach(([key, val]) => {
+    const pct = Math.round(val * 100);
+    const barColor = pct >= 70 ? 'bg-emerald-500' : pct >= 40 ? 'bg-amber-500' : 'bg-rose-500';
+    const div = document.createElement('div');
+    div.innerHTML = `
+      <div class="flex items-center justify-between mb-1">
+        <span class="text-sm text-slate-700 font-medium">${key.replace(/_/g,' ')}</span>
+        <span class="text-sm font-bold text-slate-600">${pct}%</span>
+      </div>
+      <div class="w-full bg-slate-100 rounded-full h-2.5">
+        <div class="${barColor} h-2.5 rounded-full mastery-bar" style="width:${pct}%"></div>
+      </div>`;
+    masteryEl.appendChild(div);
+  });
+
+  // Strong/weak
+  const strongList = document.getElementById('strong-list');
+  (data.strong_concepts || []).forEach(c => {
+    const li = document.createElement('li');
+    li.className = 'text-sm text-slate-600 flex items-center gap-2';
+    li.innerHTML = `<span class="text-emerald-500">✓</span>${c.replace(/_/g,' ')}`;
+    strongList.appendChild(li);
+  });
+  if (!data.strong_concepts?.length) strongList.innerHTML = '<li class="text-sm text-slate-400 italic">Keep practicing!</li>';
+
+  const weakList = document.getElementById('weak-list');
+  (data.weak_concepts || []).forEach(c => {
+    const li = document.createElement('li');
+    li.className = 'text-sm text-slate-600 flex items-center gap-2';
+    li.innerHTML = `<span class="text-amber-500">⚠</span>${c.replace(/_/g,' ')}`;
+    weakList.appendChild(li);
+  });
+  if (!data.weak_concepts?.length) weakList.innerHTML = '<li class="text-sm text-slate-400 italic">Great job on all concepts!</li>';
+
+  // Misconceptions
+  if (data.misconceptions?.length) {
+    document.getElementById('misconceptions-section').classList.remove('hidden');
+    const miscList = document.getElementById('misconceptions-list');
+    data.misconceptions.slice(0, 5).forEach(m => {
+      const li = document.createElement('li');
+      li.className = 'text-sm text-slate-600 bg-rose-50 border border-rose-100 rounded-lg p-3';
+      li.textContent = m;
+      miscList.appendChild(li);
+    });
+  }
+
+  // Recommendations
+  const revList = document.getElementById('revision-list');
+  (data.recommended_revision || []).slice(0, 4).forEach(r => {
+    const li = document.createElement('li');
+    li.className = 'text-sm text-slate-600 flex items-center gap-2';
+    li.innerHTML = `<span class="text-indigo-400">•</span>${r}`;
+    revList.appendChild(li);
+  });
+
+  const pracList = document.getElementById('practice-list');
+  (data.recommended_practice || []).slice(0, 4).forEach(p => {
+    const li = document.createElement('li');
+    li.className = 'text-sm text-slate-600 flex items-center gap-2';
+    li.innerHTML = `<span class="text-violet-400">•</span>${p}`;
+    pracList.appendChild(li);
+  });
+
+  document.getElementById('next-topic').textContent = data.next_topic || 'Continue exploring this subject';
+}
+
+loadReport();
+</script>
+{% endblock %}

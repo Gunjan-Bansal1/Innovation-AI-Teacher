@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+{% block title %}Analyzing Content — AI Teacher{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-6 py-12">
+  <div class="text-center mb-8">
+    <div class="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-4">
+      <span>Step 2 of 3</span>
+    </div>
+    <h1 class="text-3xl font-bold text-slate-800 mb-2">What Would You Like to Learn?</h1>
+    <p class="text-slate-500" id="analyze-subtitle">AI is analyzing your content...</p>
+  </div>
+
+  <!-- Loading state -->
+  <div id="loading-state" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-10 text-center">
+    <div class="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-5 animate-pulse">
+      <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+      </svg>
+    </div>
+    <p class="text-slate-600 font-medium" id="loading-msg">Analyzing content with AI...</p>
+    <p class="text-slate-400 text-sm mt-2">This may take 15–30 seconds</p>
+    <div class="w-full bg-slate-100 rounded-full h-1.5 mt-5">
+      <div id="progress-bar" class="bg-indigo-500 h-1.5 rounded-full transition-all duration-500" style="width:0%"></div>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div id="analysis-results" class="hidden">
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-5">
+      <!-- Subject + doc info -->
+      <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+        <div>
+          <h2 class="font-bold text-slate-800" id="subject-title">Subject</h2>
+          <p class="text-sm text-slate-500" id="doc-info"></p>
+        </div>
+        <span id="difficulty-badge" class="px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700">Beginner</span>
+      </div>
+
+      <!-- Topic selection -->
+      <div class="p-6">
+        <h3 class="font-semibold text-slate-700 mb-4">Select What to Learn</h3>
+
+        <!-- Detected topics/concepts list -->
+        <div id="topics-list" class="space-y-3 mb-6"></div>
+
+        <!-- Custom topic input -->
+        <div class="border-t border-slate-100 pt-4">
+          <label class="block text-sm text-slate-600 mb-2">Or enter a specific topic/concept:</label>
+          <input type="text" id="custom-topic" placeholder="e.g., Ohm's Law, just Resistance..."
+                 class="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-indigo-400 outline-none text-sm" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Embedding status for document mode -->
+    <div id="embedding-notice" class="hidden mb-4 p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-sm flex items-start gap-2">
+      <svg class="w-4 h-4 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.834-1.962-.834-2.732 0L3.072 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+      <span>Document is still being embedded. RAG search will be available shortly. You can still start the lesson — it will use general knowledge in the meantime.</span>
+    </div>
+
+    <button id="create-lesson-btn"
+            class="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold py-3.5 rounded-xl text-sm shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2">
+      <span id="lesson-btn-text">Create Lesson Plan →</span>
+      <svg id="lesson-btn-spinner" class="w-4 h-4 animate-spin hidden" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+      </svg>
+    </button>
+    <p id="lesson-error" class="text-red-500 text-sm mt-3 text-center hidden"></p>
+    <button id="create-video-btn"
+            class="mt-4 w-full border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold py-3.5 rounded-xl text-sm transition-all flex items-center justify-center gap-2">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+      </svg>
+      Create Topic Video
+    </button>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const params = new URLSearchParams(window.location.search);
+const learnerId = params.get('learner_id') || localStorage.getItem('learner_id');
+const documentId = params.get('document_id') || localStorage.getItem('document_id');
+const topicParam = params.get('topic') || localStorage.getItem('topic');
+const mode = documentId ? 'document' : 'topic';
+
+let analysisData = null;
+let selectedConcepts = [];
+let embeddingReady = false;
+
+// Animate progress bar during loading
+let progress = 0;
+const bar = document.getElementById('progress-bar');
+const progressInterval = setInterval(() => {
+  progress = Math.min(progress + Math.random() * 8, 85);
+  bar.style.width = progress + '%';
+}, 800);
+
+async function runAnalysis() {
+  document.getElementById('analyze-subtitle').textContent =
+    mode === 'document' ? 'AI is analyzing your document...' : `Analyzing: "${topicParam}"`;
+
+  try {
+    const prefs = JSON.parse(localStorage.getItem('learner_prefs') || '{}');
+    const customQuestion = localStorage.getItem('custom_question') || '';
+
+    const body = {
+      topic: topicParam || customQuestion || 'General Learning',
+      document_id: documentId || null,
+      level: prefs.level || 'beginner',
+      custom_question: customQuestion || topicParam || null
+    };
+
+    if (customQuestion && document.getElementById('custom-topic')) {
+      document.getElementById('custom-topic').value = customQuestion;
+    }
+
+    // Wait a bit for document to be at least partially available
+    if (mode === 'document') {
+      document.getElementById('loading-msg').textContent = 'Waiting for document upload to complete...';
+      await new Promise(r => setTimeout(r, 3000));
+    }
+
+    document.getElementById('loading-msg').textContent = 'Extracting topics and concepts...';
+    const resp = await fetch('/api/topics/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    if (!resp.ok) throw new Error('Analysis failed');
+    analysisData = await resp.json();
+
+    clearInterval(progressInterval);
+    bar.style.width = '100%';
+
+    // Check embedding status for document mode
+    if (mode === 'document') {
+      const docResp = await fetch(`/api/documents/${documentId}`);
+      if (docResp.ok) {
+        const docData = await docResp.json();
+        embeddingReady = docData.embedding_status === 'complete';
+        if (!embeddingReady) {
+          document.getElementById('embedding-notice').classList.remove('hidden');
+        }
+      }
+    }
+
+    await new Promise(r => setTimeout(r, 500));
+    showResults();
+  } catch (err) {
+    clearInterval(progressInterval);
+    document.getElementById('loading-msg').textContent = `Error: ${err.message}`;
+    document.getElementById('loading-msg').classList.add('text-red-500');
+  }
+}
+
+function showResults() {
+  document.getElementById('loading-state').classList.add('hidden');
+  document.getElementById('analysis-results').classList.remove('hidden');
+
+  // Subject info
+  document.getElementById('subject-title').textContent = analysisData.subject || 'General';
+  document.getElementById('difficulty-badge').textContent =
+    (analysisData.difficulty_level || 'beginner').charAt(0).toUpperCase() +
+    (analysisData.difficulty_level || 'beginner').slice(1);
+
+  if (mode === 'document') {
+    const docInfo = JSON.parse(localStorage.getItem('document_info') || '{}');
+    document.getElementById('doc-info').textContent =
+      `${docInfo.filename || 'Document'} · ${docInfo.total_pages || '?'} pages · ${docInfo.word_count || '?'} words`;
+  } else {
+    document.getElementById('doc-info').textContent = `Topic: ${topicParam}`;
+  }
+
+  // Topics list
+  const topicsList = document.getElementById('topics-list');
+  const concepts = analysisData.concepts || [];
+  const mainTopics = analysisData.main_topics || [];
+
+  // Show detected topics with checkbox selection
+  const items = concepts.length > 0 ? concepts.map(c => ({ key: c.key, name: c.name, desc: c.description }))
+    : mainTopics.map(t => ({ key: t.toLowerCase().replace(/\s+/g,'_'), name: t, desc: '' }));
+
+  if (items.length === 0) {
+    // Fallback if no concepts detected
+    items.push({ key: topicParam?.toLowerCase().replace(/\s+/g,'_') || 'topic', name: topicParam || 'Main Topic', desc: 'Full topic' });
+  }
+
+  items.slice(0, 10).forEach((item, i) => {
+    const div = document.createElement('div');
+    div.innerHTML = `
+      <label class="flex items-start gap-3 p-3 rounded-xl border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/30 cursor-pointer transition-all group">
+        <input type="checkbox" value="${item.key}" data-name="${item.name}"
+               class="mt-0.5 w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-indigo-400 concept-checkbox" ${i === 0 ? 'checked' : ''} />
+        <div>
+          <div class="font-medium text-slate-700 text-sm">${item.name}</div>
+          ${item.desc ? `<div class="text-xs text-slate-400 mt-0.5">${item.desc}</div>` : ''}
+        </div>
+      </label>`;
+    topicsList.appendChild(div);
+  });
+}
+
+function getSelectedVideoTopic() {
+  const customTopic = document.getElementById('custom-topic').value.trim();
+  if (customTopic) return customTopic;
+
+  const checked = document.querySelector('.concept-checkbox:checked');
+  if (checked) return checked.dataset.name || checked.value;
+
+  return analysisData?.main_topics?.[0] || topicParam || 'General Topic';
+}
+
+document.getElementById('create-video-btn').addEventListener('click', () => {
+  const finalTopic = getSelectedVideoTopic();
+  const prefs = JSON.parse(localStorage.getItem('learner_prefs') || '{}');
+  const level = prefs.level || analysisData?.difficulty_level || 'beginner';
+  const language = prefs.language || 'english';
+  const teachingStyle = prefs.teachingStyle || 'simple';
+
+  localStorage.setItem('topic', finalTopic);
+  let videoUrl = `/video?topic=${encodeURIComponent(finalTopic)}&level=${encodeURIComponent(level)}&language=${encodeURIComponent(language)}&style=${encodeURIComponent(teachingStyle)}`;
+  if (documentId) {
+    videoUrl += `&document_id=${encodeURIComponent(documentId)}`;
+  }
+  window.location.href = videoUrl;
+});
+
+// Create lesson plan
+document.getElementById('create-lesson-btn').addEventListener('click', async () => {
+  const btn = document.getElementById('create-lesson-btn');
+  const spinner = document.getElementById('lesson-btn-spinner');
+  const errorEl = document.getElementById('lesson-error');
+
+  btn.disabled = true;
+  spinner.classList.remove('hidden');
+  errorEl.classList.add('hidden');
+  document.getElementById('lesson-btn-text').textContent = 'Creating lesson plan...';
+
+  try {
+    // Get selected concepts
+    const checked = document.querySelectorAll('.concept-checkbox:checked');
+    selectedConcepts = Array.from(checked).map(cb => cb.dataset.name || cb.value);
+    const customTopic = document.getElementById('custom-topic').value.trim();
+    if (customTopic) selectedConcepts.unshift(customTopic);
+
+    const finalTopic = customTopic || selectedConcepts[0] ||
+      analysisData?.main_topics?.[0] || topicParam || 'General Topic';
+
+    const prefs = JSON.parse(localStorage.getItem('learner_prefs') || '{}');
+
+    const body = {
+      learner_id: learnerId,
+      topic: finalTopic,
+      subject: analysisData?.subject || 'general',
+      document_id: documentId || null,
+      selected_concepts: selectedConcepts,
+      level: prefs.level || 'beginner',
+      language: prefs.language || 'english',
+      teaching_style: prefs.teachingStyle || 'simple',
+      depth: prefs.depth || 'standard',
+      available_time_minutes: prefs.availableTime || 10,
+    };
+
+    const resp = await fetch('/api/lessons/plan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (!resp.ok) { const e = await resp.json(); throw new Error(e.detail || 'Failed to create lesson'); }
+    const lessonData = await resp.json();
+
+    localStorage.setItem('lesson_id', lessonData.lesson_id);
+    localStorage.setItem('lesson_info', JSON.stringify(lessonData));
+    localStorage.setItem('topic', finalTopic);
+
+    window.location.href = '/lesson-plan';
+  } catch (err) {
+    errorEl.textContent = err.message;
+    errorEl.classList.remove('hidden');
+    btn.disabled = false;
+    spinner.classList.add('hidden');
+    document.getElementById('lesson-btn-text').textContent = 'Create Lesson Plan →';
+  }
+});
+
+// Start
+runAnalysis();
+</script>
+{% endblock %}

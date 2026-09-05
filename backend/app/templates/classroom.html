@@ -1,0 +1,306 @@
+{% extends "base.html" %}
+{% block title %}AI Classroom — AI Teacher{% endblock %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<style>
+  body { overflow-x: hidden; }
+  #classroom-root { min-height: calc(100vh - 64px); }
+  .board-content { min-height: 200px; }
+  .typewriter-cursor::after { content: '|'; animation: blink 1s infinite; }
+  @keyframes blink { 0%,50% { opacity: 1; } 51%,100% { opacity: 0; } }
+  .mastery-bar { transition: width 0.6s ease; }
+  .segment-dot.active { transform: scale(1.3); }
+  #teacher-avatar .avatar-pulse { animation: avatarPulse 2s ease-in-out infinite; }
+  @keyframes avatarPulse { 0%,100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(99,102,241,0.3); } 50% { transform: scale(1.02); box-shadow: 0 0 0 12px rgba(99,102,241,0); } }
+  .answer-correct { animation: correctFlash 0.5s ease; }
+  .answer-wrong { animation: wrongShake 0.4s ease; }
+  @keyframes correctFlash { 0% { background: #d1fae5; } 100% { background: white; } }
+  @keyframes wrongShake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+  .sound-bar { animation: soundWave 1.1s ease-in-out infinite alternate; }
+  @keyframes soundWave { 0% { height: 4px; opacity: 0.5; } 100% { height: 22px; opacity: 1; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="classroom-root" class="flex flex-col bg-slate-50">
+
+  <!-- Top bar: lesson info + progress -->
+  <div class="bg-white border-b border-slate-200 px-6 py-3">
+    <div class="max-w-7xl mx-auto">
+      <div class="flex items-center justify-between gap-4">
+        <div class="flex items-center gap-4 min-w-0">
+          <div class="min-w-0">
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-slate-400 font-medium">Lesson</span>
+              <span id="lesson-topic" class="text-sm font-bold text-slate-800 truncate max-w-xs">Loading...</span>
+            </div>
+            <div class="flex items-center gap-2 mt-0.5">
+              <span class="text-xs text-slate-400">Concept:</span>
+              <span id="current-concept-label" class="text-xs font-semibold text-indigo-600">—</span>
+              <span id="status-badge" class="px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600">Teaching</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Progress -->
+        <div class="flex items-center gap-4 shrink-0">
+          <div class="hidden sm:flex items-center gap-2">
+            <span class="text-xs text-slate-400">Progress</span>
+            <div class="w-32 bg-slate-100 rounded-full h-2 overflow-hidden">
+              <div id="progress-bar" class="bg-gradient-to-r from-indigo-500 to-violet-500 h-2 rounded-full transition-all duration-500" style="width:0%"></div>
+            </div>
+            <span id="progress-pct" class="text-xs font-semibold text-slate-600">0%</span>
+          </div>
+          <button id="btn-pause" onclick="togglePause()"
+                  class="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 hover:border-slate-300 transition-all">⏸ Pause</button>
+          <a href="/dashboard" class="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 hover:border-slate-300 transition-all">✕ Exit</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main classroom area -->
+  <div class="flex-1 max-w-7xl mx-auto w-full px-4 py-5 grid lg:grid-cols-[300px_1fr] gap-5">
+
+    <!-- LEFT: AI Teacher panel -->
+    <div class="flex flex-col gap-4">
+
+      <!-- Avatar Card -->
+      <div id="teacher-avatar" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 text-center">
+        <!-- Live Video (active when Simli teaching clip / speaking animation is active) -->
+        <div id="avatar-video-container" class="hidden w-full aspect-video bg-slate-900 rounded-xl overflow-hidden mb-3 shadow-md relative group">
+          <video id="avatar-video" class="w-full h-full object-cover" playsinline></video>
+          <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent pointer-events-none"></div>
+          <!-- Overlay badge & sound waves -->
+          <div class="absolute bottom-2 left-2 right-2 flex items-center justify-between pointer-events-none px-1">
+            <span id="video-mode-badge" class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-950/80 backdrop-blur-sm text-emerald-300 border border-emerald-500/30">Simli AI Teacher</span>
+            <div id="video-sound-waves" class="flex items-center justify-center gap-0.5 bg-slate-900/80 backdrop-blur-sm px-2 py-1 rounded-full border border-emerald-500/30">
+              <div class="w-0.5 bg-emerald-400 rounded-full sound-bar" style="animation-delay:0.1s; height:6px;"></div>
+              <div class="w-0.5 bg-emerald-300 rounded-full sound-bar" style="animation-delay:0.3s; height:14px;"></div>
+              <div class="w-0.5 bg-emerald-400 rounded-full sound-bar" style="animation-delay:0.2s; height:18px;"></div>
+              <div class="w-0.5 bg-emerald-300 rounded-full sound-bar" style="animation-delay:0.4s; height:10px;"></div>
+              <div class="w-0.5 bg-emerald-400 rounded-full sound-bar" style="animation-delay:0.15s; height:6px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Simli AI Teacher Avatar Display (shown when idle / speaking) -->
+        <div id="avatar-card-display" class="w-full aspect-video bg-slate-900 rounded-xl overflow-hidden mb-3 shadow-md relative flex items-center justify-center group">
+          <img id="simli-avatar-img" src="/static/img/simli_teacher_avatar.jpg" alt="Simli AI Teacher" class="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-105" />
+          <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-black/20"></div>
+
+          <!-- Glowing ring / aura when speaking -->
+          <div id="avatar-glow" class="hidden absolute inset-0 border-2 border-indigo-400/80 rounded-xl shadow-[inset_0_0_20px_rgba(99,102,241,0.5)] transition-all duration-500 animate-pulse pointer-events-none"></div>
+
+          <!-- Overlay badge & sound waves -->
+          <div class="absolute bottom-2 left-2 right-2 flex items-center justify-between pointer-events-none px-1">
+            <span id="avatar-mode-badge" class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-900/80 backdrop-blur-sm text-indigo-200 border border-indigo-500/30">Simli AI Teacher</span>
+            <!-- Animated sound waves (shown when speaking) -->
+            <div id="sound-waves" class="hidden flex items-center justify-center gap-0.5 bg-slate-900/80 backdrop-blur-sm px-2 py-1 rounded-full border border-indigo-500/30">
+              <div class="w-0.5 bg-indigo-400 rounded-full sound-bar" style="animation-delay:0.1s; height:6px;"></div>
+              <div class="w-0.5 bg-indigo-300 rounded-full sound-bar" style="animation-delay:0.3s; height:14px;"></div>
+              <div class="w-0.5 bg-indigo-400 rounded-full sound-bar" style="animation-delay:0.2s; height:18px;"></div>
+              <div class="w-0.5 bg-indigo-300 rounded-full sound-bar" style="animation-delay:0.4s; height:10px;"></div>
+              <div class="w-0.5 bg-indigo-400 rounded-full sound-bar" style="animation-delay:0.15s; height:6px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <p class="text-sm font-bold text-slate-700">Simli AI Teacher</p>
+        <p class="text-xs text-slate-400 mt-0.5" id="avatar-status">Ready to teach</p>
+        <div id="speaking-indicator" class="hidden mt-2 flex items-center justify-center gap-1 text-indigo-600 text-xs font-semibold">
+          <span class="inline-block w-2 h-2 rounded-full bg-indigo-600 animate-ping mr-1"></span> Explaining concept...
+        </div>
+      </div>
+
+      <!-- Teacher speech bubble -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex-1 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <div class="w-2 h-2 bg-indigo-500 rounded-full"></div>
+              <span class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Teacher Explanation</span>
+            </div>
+            <button id="btn-replay-audio" onclick="replaySpokenAudio()" title="Replay voice explanation" class="text-slate-400 hover:text-indigo-600 text-xs flex items-center gap-1 transition-colors">
+              <span>🔊</span> Replay
+            </button>
+          </div>
+          <div id="spoken-text" class="text-slate-700 text-sm leading-relaxed min-h-[80px]">
+            <span class="text-slate-400 italic">Waiting for lesson to begin...</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
+        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Controls</p>
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="repeatSegment()" class="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 hover:border-indigo-300 hover:text-indigo-600 transition-all">
+            🔄 Repeat
+          </button>
+          <button onclick="simplifyExplanation()" class="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 hover:border-indigo-300 hover:text-indigo-600 transition-all">
+            💡 Simpler
+          </button>
+          <button onclick="openAskModal()" class="col-span-2 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 hover:border-violet-300 hover:text-violet-600 transition-all">
+            ❓ Ask Teacher
+          </button>
+        </div>
+
+        <!-- Language switcher -->
+        <div class="mt-3 pt-3 border-t border-slate-100">
+          <p class="text-xs text-slate-400 mb-1.5">Language</p>
+          <div class="flex gap-1.5">
+            {% for lang in ['english', 'hindi', 'hinglish'] %}
+            <button onclick="switchLanguage('{{ lang }}')"
+                    class="lang-btn flex-1 px-2 py-1.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-500 hover:border-indigo-300 hover:text-indigo-600 transition-all"
+                    data-lang="{{ lang }}">{{ lang.capitalize() }}</button>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Mastery panel -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
+        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Concept Mastery</p>
+        <div id="mastery-panel" class="space-y-3">
+          <p class="text-xs text-slate-400 italic">No data yet</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Smart Board -->
+    <div class="flex flex-col gap-4">
+
+      <!-- Board header -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex-1 flex flex-col">
+        <div class="px-5 py-3 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-indigo-50/30 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-3 h-3 rounded-full bg-red-400"></div>
+            <div class="w-3 h-3 rounded-full bg-amber-400"></div>
+            <div class="w-3 h-3 rounded-full bg-emerald-400"></div>
+            <span class="ml-2 text-sm font-bold text-slate-600">Smart Board</span>
+          </div>
+          <span id="board-type-label" class="text-xs text-slate-400 font-medium"></span>
+        </div>
+
+        <!-- Board content area -->
+        <div id="board-content" class="board-content flex-1 p-6 overflow-auto text-slate-800">
+          <div class="text-center text-slate-300 py-10">
+            <svg class="w-12 h-12 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <rect x="3" y="3" width="18" height="14" rx="2" stroke-width="1.5"/>
+              <path d="M8 21h8M12 17v4" stroke-width="1.5"/>
+            </svg>
+            <p class="text-sm">Smart Board — diagrams, formulas, code will appear here</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Adaptation message -->
+      <div id="adaptation-banner" class="hidden bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-amber-700 text-sm font-medium flex items-center gap-2">
+        <span>📚</span>
+        <span id="adaptation-text">Teacher adapted the lesson based on your response.</span>
+      </div>
+
+      <!-- Bottom: Student interaction -->
+      <div id="student-panel" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+
+        <!-- Normal: next button when teaching -->
+        <div id="next-panel" class="p-4 flex items-center justify-between">
+          <p class="text-sm text-slate-500" id="next-hint">Click "Next" to continue the lesson</p>
+          <button id="next-btn" onclick="nextSegment()"
+                  class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 py-2.5 rounded-xl text-sm shadow-sm transition-all flex items-center gap-2">
+            <span>Next →</span>
+            <svg id="next-spinner" class="w-4 h-4 animate-spin hidden" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Question panel: shown when waiting_for_answer -->
+        <div id="question-panel" class="hidden p-5">
+          <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-4 mb-4">
+            <p class="text-xs font-semibold text-indigo-500 uppercase tracking-wide mb-2">Question</p>
+            <p id="question-text" class="text-slate-800 font-medium text-sm leading-relaxed"></p>
+          </div>
+
+          <!-- MCQ options -->
+          <div id="mcq-options" class="hidden grid gap-2 mb-4"></div>
+
+          <!-- Free text -->
+          <div id="text-answer-section">
+            <div class="flex items-end gap-2">
+              <div class="flex-1 relative">
+                <textarea id="answer-input" rows="2"
+                          placeholder="Type your answer here..."
+                          class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none text-sm text-slate-800 resize-none transition-all"
+                          onkeydown="handleAnswerKeydown(event)"></textarea>
+              </div>
+              <div class="flex gap-2">
+                <button id="mic-btn" onclick="toggleMic()" title="Voice input"
+                        class="w-10 h-10 rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 hover:border-indigo-300 hover:text-indigo-600 transition-all">
+                  🎤
+                </button>
+                <button id="submit-answer-btn" onclick="submitAnswer()"
+                        class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-all flex items-center gap-2 shadow-sm">
+                  <span>Submit</span>
+                  <svg id="answer-spinner" class="w-4 h-4 animate-spin hidden" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Assessment mode -->
+        <div id="assessment-trigger-panel" class="hidden p-4">
+          <p class="text-sm text-indigo-700 font-medium mb-3">🎓 Time for your Final Assessment!</p>
+          <button onclick="startAssessment()"
+                  class="w-full bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold py-3 rounded-xl text-sm shadow-md hover:shadow-lg transition-all">
+            Begin Final Assessment →
+          </button>
+        </div>
+
+        <!-- Completed -->
+        <div id="completed-panel" class="hidden p-4 text-center">
+          <p class="text-emerald-600 font-bold text-sm mb-3">🎉 Lesson Complete!</p>
+          <div class="flex gap-3">
+            <a href="/report" class="flex-1 bg-emerald-600 text-white font-bold py-2.5 rounded-xl text-sm text-center hover:bg-emerald-700 transition-all">View Report</a>
+            <a href="/" class="flex-1 border border-slate-200 text-slate-600 font-bold py-2.5 rounded-xl text-sm text-center hover:border-slate-300 transition-all">New Lesson</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Ask Teacher Modal -->
+<div id="ask-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+    <h3 class="font-bold text-slate-800 mb-4">Ask Your Teacher</h3>
+    <textarea id="ask-input" rows="3" placeholder="What would you like to know?"
+              class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-indigo-400 outline-none text-sm resize-none mb-4"></textarea>
+    <div class="flex gap-3">
+      <button onclick="closeAskModal()" class="flex-1 border border-slate-200 text-slate-600 font-medium py-2.5 rounded-xl text-sm hover:border-slate-300 transition-all">Cancel</button>
+      <button onclick="submitAsk()"
+              class="flex-1 bg-indigo-600 text-white font-bold py-2.5 rounded-xl text-sm hover:bg-indigo-700 transition-all flex items-center justify-center gap-2">
+        <span>Ask</span>
+        <svg id="ask-spinner" class="w-4 h-4 animate-spin hidden" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+      </button>
+    </div>
+    <div id="ask-answer" class="hidden mt-4 p-4 bg-indigo-50 rounded-xl text-sm text-slate-700 leading-relaxed"></div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/classroom.js"></script>
+<script src="/static/js/microphone.js"></script>
+{% endblock %}

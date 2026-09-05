@@ -36,20 +36,20 @@ $$\text{Understand} \longrightarrow \text{Plan} \longrightarrow \text{Explain} \
 
 ## 🌟 Key Features
 
-| Feature | Assessment Req. | Implementation Details |
-| :--- | :---: | :--- |
-| **Document-Grounded Learning** | §3, §17.1 | Ingestion of **PDF, DOCX, PPTX, and TXT** documents via PyMuPDF, python-docx, and python-pptx with sliding-window semantic chunking and MongoDB vector KNN search. |
-| **Topic-Based Teaching** | §4, §17.2 | Instant curriculum synthesis for any prompt (e.g. *"Explain Newton's Laws to Class 8"* or *"React for technical interviews"*) without requiring source documents. |
-| **Personalized Curricula** | §6, §7, §17.3-4 | Adapts dynamically to learner **level** (`beginner`, `intermediate`, `advanced`), **available time** (5m, 20m, 60m, multi-day), **teaching style** (`simple`, `technical`, `visual`, `story-based`), and **prior knowledge**. |
-| **Human-Like Teaching Loop** | §5, §11, §17.5 | Deterministic `TeacherOrchestrator` state machine enforcing progressive concept chunking, interactive checkpoints, and mastery verification before advancing. |
-| **Talking AI Avatar & Voice** | §9, §17.6-8 | Real-time audio-driven lip-sync avatar generated via **Simli API**, backed by **Microsoft Edge-TTS** neural voices (`en-IN-NeerjaNeural`, `hi-IN-SwaraNeural`) with ElevenLabs premium support and local FFmpeg fallback. |
-| **Subject-Aware Dynamic Visuals** | §10 | Context-sensitive visual chalkboard rendering: **KaTeX** LaTeX math, **Mermaid.js** flowcharts & biological cycles, syntax-highlighted code blocks, and chronological timelines. |
-| **Multilingual Mastery** | §8, §17.9 | Full native instruction in **English, Hindi, and Hinglish** with mid-session seamless language switching and cross-language RAG (e.g., English textbook $\to$ Hindi spoken lecture). |
-| **Objective & Semantic Evaluation** | §12, §17.10 | **Deterministic zero-leniency grading** for MCQs & blank submissions; strict semantic rubric LLM grading for conceptual and open-ended student responses. |
-| **Misconception Diagnosis & Adaptation** | §12, §17.11 | Diagnoses exact misunderstanding root causes and triggers 1 of 5 targeted pedagogical interventions (`simpler explanation`, `analogy`, `visual demonstration`, `worked example`, `easier question`) with anti-repetition safeguards. |
-| **Recency-Weighted Mastery Tracking**| §13, §14 | Mathematical mastery formulation scaling attempt scores by recency weights ($w_i = 1.0 + 0.15i$) and question difficulty ($d_i \in [0.8, 1.3]$). |
-| **Diagnostic Learning Reports** | §13, §14 | Post-session analytics dashboard: composite score, grade, concept mastery radar, diagnosed misconceptions, targeted revision recommendations, and recommended next learning path. |
-| **Production-Ready Prototype** | §17.12 | Modular FastAPI backend, Jinja2 dynamic UI, single-command launcher, health-check suites, and full test coverage. |
+| Feature | Category | Implementation Details |
+| :--- | :--- | :--- |
+| **Document-Grounded Learning** | Knowledge Ingestion & RAG | Ingestion of **PDF, DOCX, PPTX, and TXT** documents via PyMuPDF, python-docx, and python-pptx with sliding-window semantic chunking and MongoDB vector KNN search. |
+| **Topic-Based Teaching** | Curriculum Synthesis | Instant curriculum synthesis for any prompt (e.g. *"Explain Newton's Laws to Class 8"* or *"React for technical interviews"*) without requiring source documents. |
+| **Personalized Curricula** | Dynamic Learner Adaptivity | Adapts dynamically to learner **level** (`beginner`, `intermediate`, `advanced`), **available time** (5m, 20m, 60m, multi-day), **teaching style** (`simple`, `technical`, `visual`, `story-based`), and **prior knowledge**. |
+| **Human-Like Teaching Loop** | Pedagogical State Machine | Deterministic `TeacherOrchestrator` state machine enforcing progressive concept chunking, interactive checkpoints, and mastery verification before advancing. |
+| **Talking AI Avatar & Voice** | Video & Audio Synthesis | Real-time audio-driven lip-sync avatar generated via **Simli API**, backed by **Microsoft Edge-TTS** neural voices (`en-IN-NeerjaNeural`, `hi-IN-SwaraNeural`) with ElevenLabs premium support and local FFmpeg fallback. |
+| **Subject-Aware Dynamic Visuals** | Interactive Chalkboard | Context-sensitive visual chalkboard rendering: **KaTeX** LaTeX math, **Mermaid.js** flowcharts & biological cycles, syntax-highlighted code blocks, and chronological timelines. |
+| **Multilingual Mastery** | Language Accessibility | Full native instruction in **English, Hindi, and Hinglish** with mid-session seamless language switching and cross-language RAG (e.g., English textbook $\to$ Hindi spoken lecture). |
+| **Objective & Semantic Evaluation** | Assessment Engine | **Deterministic zero-leniency grading** for MCQs & blank submissions; strict semantic rubric LLM grading for conceptual and open-ended student responses. |
+| **Misconception Diagnosis & Adaptation** | Adaptive Remediation | Diagnoses exact misunderstanding root causes and triggers 1 of 5 targeted pedagogical interventions (`simpler explanation`, `analogy`, `visual demonstration`, `worked example`, `easier question`) with anti-repetition safeguards. |
+| **Recency-Weighted Mastery Tracking**| Mathematical Progress Engine | Mathematical mastery formulation scaling attempt scores by recency weights ($w_i = 1.0 + 0.15i$) and question difficulty ($d_i \in [0.8, 1.3]$). |
+| **Diagnostic Learning Reports** | Analytics & Insights | Post-session analytics dashboard: composite score, grade, concept mastery radar, diagnosed misconceptions, targeted revision recommendations, and recommended next learning path. |
+| **Production-Ready Prototype** | Full-Stack Architecture | Modular FastAPI backend, Jinja2 dynamic UI, single-command launcher, health-check suites, and full test coverage. |
 
 ---
 
@@ -411,20 +411,20 @@ The backend provides full REST coverage for headless and frontend integration:
 
 This project satisfies all requirements outlined in the **AI Innovation Hackathon 2026 Round 2 Technical Assessment**:
 
-| Assessment Section | Specification | AI Teacher Implementation | Status |
-| :--- | :--- | :--- | :---: |
-| **§17.1** | Learning from uploaded material | `app/rag/` — Multi-format parser (PDF, DOCX, PPTX, TXT) + sliding semantic chunker + MongoDB vector store | ✅ **Complete** |
-| **§17.2** | Topic-based teaching | `/api/topics/analyze` + `LessonPlannerAgent` generates full curricula without documents | ✅ **Complete** |
-| **§17.3** | AI-generated lesson structure | `LessonPlannerAgent` produces timed, ordered concept segments tailored to timeframe | ✅ **Complete** |
-| **§17.4** | Personalized teaching | Learner profile (level, language, style, time, depth, prior knowledge) steers all prompts | ✅ **Complete** |
-| **§17.5** | Human-like teaching interaction | Deterministic state machine enforces: understand $\to$ plan $\to$ explain $\to$ demonstrate $\to$ question $\to$ evaluate $\to$ adapt | ✅ **Complete** |
-| **§17.6** | Video-based AI Teacher presentation| `/video` FFmpeg video compositor + classroom dynamic avatar attachment | ✅ **Complete** |
-| **§17.7** | AI voice | Microsoft Edge-TTS neural speech (`en-IN-NeerjaNeural`, `hi-IN-SwaraNeural`) + ElevenLabs support | ✅ **Complete** |
-| **§17.8** | Human-like AI avatar | Simli lip-synced talking head with facial animation matched to spoken narration | ✅ **Complete** |
-| **§17.9** | Multilingual capability | Native English, Hindi, and Hinglish instruction with mid-session switching and cross-language RAG | ✅ **Complete** |
-| **§17.10** | Student questioning & assessment | Diagnostic checkpoint questions, MCQ/short-answer, final quiz, and detailed rubric scoring | ✅ **Complete** |
-| **§17.11** | Adaptive response to performance | `MisconceptionAgent` root cause classification + 5 `AdaptationAgent` teaching strategies | ✅ **Complete** |
-| **§17.12** | Working prototype | Full FastAPI web application accessible at `http://127.0.0.1:8000` | ✅ **Complete** |
+| # | Core Requirement | AI Teacher Implementation | Status |
+| :-: | :--- | :--- | :---: |
+| **1** | Learning from uploaded material | `app/rag/` — Multi-format parser (PDF, DOCX, PPTX, TXT) + sliding semantic chunker + MongoDB vector store | ✅ **Complete** |
+| **2** | Topic-based teaching | `/api/topics/analyze` + `LessonPlannerAgent` generates full curricula without documents | ✅ **Complete** |
+| **3** | AI-generated lesson structure | `LessonPlannerAgent` produces timed, ordered concept segments tailored to timeframe | ✅ **Complete** |
+| **4** | Personalized teaching | Learner profile (level, language, style, time, depth, prior knowledge) steers all prompts | ✅ **Complete** |
+| **5** | Human-like teaching interaction | Deterministic state machine enforces: understand $\to$ plan $\to$ explain $\to$ demonstrate $\to$ question $\to$ evaluate $\to$ adapt | ✅ **Complete** |
+| **6** | Video-based AI Teacher presentation | `/video` FFmpeg video compositor + classroom dynamic avatar attachment | ✅ **Complete** |
+| **7** | AI voice | Microsoft Edge-TTS neural speech (`en-IN-NeerjaNeural`, `hi-IN-SwaraNeural`) + ElevenLabs support | ✅ **Complete** |
+| **8** | Human-like AI avatar | Simli lip-synced talking head with facial animation matched to spoken narration | ✅ **Complete** |
+| **9** | Multilingual capability | Native English, Hindi, and Hinglish instruction with mid-session switching and cross-language RAG | ✅ **Complete** |
+| **10** | Student questioning & assessment | Diagnostic checkpoint questions, MCQ/short-answer, final quiz, and detailed rubric scoring | ✅ **Complete** |
+| **11** | Adaptive response to performance | `MisconceptionAgent` root cause classification + 5 `AdaptationAgent` teaching strategies | ✅ **Complete** |
+| **12** | Working prototype | Full FastAPI web application accessible at `http://127.0.0.1:8000` | ✅ **Complete** |
 
 ---
 

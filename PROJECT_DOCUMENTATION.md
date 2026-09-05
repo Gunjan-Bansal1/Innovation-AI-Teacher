@@ -603,6 +603,7 @@ Access the application at `http://localhost:8000`.
 <div align="center">
 
 **AI Teacher — AI Innovation Hackathon 2026**  
-*Submitted with pride by the AI Teacher Development Team.*
+*Submitted with pride by the "Innovation" Team.*
 
 </div>
+
